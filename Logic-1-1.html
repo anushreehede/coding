@@ -1,0 +1,220 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Logic Assignment</title>
+<link href="https://fonts.googleapis.com/css?family=Gidugu" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Almendra+SC" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Josefin+Sans" rel="stylesheet">
+<style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+</style>
+</head>
+<body style ="background-color: thistle ; font-size: 25px ; color: indigo; font-family: 'Josefin Sans', sans-serif">
+<center><h1 style="font color : MediumVioletRed; font-family: 'Almendra SC', serif"> LOGIC   ASSIGNMENT  I </h1></center>
+
+<a href="file:///home/uttara/Desktop/source_code.html">View source code here</a>
+<ul>
+
+<font color="MediumVioletRed "><li><h3 style="font-family: 'Almendra SC', serif"><strong>The pre-conditions for the program to run are :</strong></h3> </li></font>
+<ul>
+<li>Expression must be fully parenthesized for every sub formula </li>
+<li>Parentheses must be added in the beginning and end of the expression as well</li>
+<li>Expression must not have more than one instance of the atom or operator, eg : (a+bb) or (a++b)</li>
+<li>These are limitations of our program which make it less user friendly and more prone to run time errors. At this stage we must omit these to obtain correct output
+</li>
+</ul>
+
+<font color="MediumVioletRed "><li><h3 style="font-family: 'Almendra SC', serif"><strong>The libraries used in this program are :</strong></h3> </li></font>
+<ul>
+<li>iostream</li>
+<li>math.h</li>
+<li>string.h</li>
+<li>ctype.h</li>
+</ul>
+<font color="MediumVioletRed "><li><h3 style="font-family: 'Almendra SC', serif"><strong>The following variables have been declared :</strong></h3></li></font>
+<strong>Integers</strong>
+<ul>
+<li>Size : Constant which is equal to 250 (the maximum size of the stack).</li>
+<li> top : Denotes the index of the stack elements.</li>ind
+<li>i : Used for iterative purpose in various loops and as an index to the character array.</li>
+<li> l : Stores the length of the array.</li>
+<li> l : Stores the length of the array.</li>
+<li>boolean : Stores truth value of atom.</li>
+<li>n : Stores the number of elements in atoms.</li>
+<li>f : Used as a flag variable in multiple places.</li>
+<li>hleft:Finds the height when travelling up the parse tree from the left most node.</li>
+<li>hright:Finds the height when travelling up the parse tree from the right most node.</li>
+<li>height : Stores the height of the parse tree. </li>
+</br>
+</ul>
+<strong>Characters</strong>
+<ul>
+<li>Stack: Character array to store the characters of the expression.
+</li>
+<li>ele : Stores the current element of the expression that has been input</li>
+<li>temp: Used in the reverse function to exchange two elements.</li>
+<li>ret : Stores the character that has just been popped.
+</li>
+<li>expr : Character array that stores the infix expression that has been input by the user.
+<li>prefix: Character array that stores the prefix expression.</li>
+<li>elt : Used to store the operator</li>
+</ul>
+</br>
+<strong>Structures </strong>
+<ul>
+<li>preStack - contains a character to store elements of a expression (operators) during infix to prefix expression
+            - contains a pointer to preStack structure </li>
+<li>node - contains a character to store elements of the expression (nodes of the parse tree)
+        - contains an integer value to hold the truth value of the propositional atom, set to -1 for operators</li>
+<li>list - contains a character for holding the propositional atom (to check whether truth value is not being entered multiple times)
+        - contains an integer for holding the truth value of the propositional atom</li>
+<li>boolStack - contains an integer to hold the boolean value during expression evaluation
+             - contains a pointer to boolStack structure
+</li>
+</ul>
+</br>
+<strong>Pointers </strong>
+<ul>
+<li>node* root - (in main) holds the address of the root node of the binary tree</li>
+<li> node** ref - holds the address of the root pointer (above)</li>
+</ul>
+<font color="MediumVioletRed "><li><h3 style="font-family: 'Almendra SC', serif"><strong>User defined functions in the program</strong></h3></li></font>
+</br>
+<table style="width:100%">
+  <tr>
+    <th>Function Name</th>
+    <th>Function Role</th> 
+  </tr>
+  <tr>
+    <td>int Push</td>
+    <td>This function takes a character as input and stores it  in the stack.</td> 
+   
+  </tr>
+  <tr>
+    <td>char Pop</td>
+    <td>This function deletes the last element that was input into the stack and returns it to the calling function.
+</td> 
+    
+  </tr>
+<tr>
+    <td>void reverse</td>
+    <td>This reverses the character array that has been passed to it.</td> 
+    
+  </tr>
+<tr>
+    <td>void makePrefix</td>
+    <td>This function takes the inifx expression , reverses it , converts it to the postfix expression , reverses it again , thereby giving us the prefix expression and returns it to main where it has been called.</td> 
+   
+  </tr>
+<tr>
+    <td>void insert</td>
+    <td>This function inserts the character of the expression into a structure in the parse tree.</td> 
+    
+  </tr>
+<tr>
+    <td>int Height</td>
+    <td>This function computes the height of the parse tree by using a recursive function to count the number of times we encounter a node when we start from the left and right , and comapring the two and adding one to the greater value.</td> 
+   
+  </tr>
+<tr>
+    <td>void FreeTree</td>
+    <td>This function deallocates the memory we have used for the parse tree .
+</td> 
+   
+  </tr>
+<tr>
+    <td>void InOrder</td>
+    <td>This function traverses the tree and gives back the infix expression.</td> 
+    
+  </tr>
+</table>
+</br>
+
+<img src="CASE_1.png" />
+<img src="CASE_2.png" />
+
+<font color="MediumVioletRed "><li><h3 style="font-family: 'Almendra SC', serif"><strong> Efficiency Graph</strong></h3> </li></font>
+Our algorithm works for all cases and gives us a meaningful and correct output for all types of cases. 
+</br>
+Heap Memory in bytes has been plotted on the x-axis.
+</br>
+Execution time in 10^-4 seconds has been plotted on the y-axis.
+
+
+<table>
+<tr>
+    <th>Case number</th>
+    <th>Heap Memory in bytes</th>
+    <th>Execution time in 10^-4 seconds</th> 
+  </tr>
+<tr>
+    <td>1.</td>
+    <td>168</td> 
+    <td>4.12</td>
+ </tr>
+<tr>
+    <td>2.</td>
+    <td>384</td> 
+    <td>3.26</td>
+ </tr>
+<tr>
+    <td>3.</td>
+    <td>472</td> 
+    <td>3.71</td>
+ </tr>
+<tr>
+    <td>4.</td>
+    <td>512</td> 
+    <td>4.42</td>
+ </tr>
+<tr>
+    <td>5.</td>
+    <td>640</td> 
+    <td>3.42</td>
+ </tr>
+<tr>
+    <td>6.</td>
+    <td>688</td> 
+    <td>3.5</td>
+ </tr>
+<tr>
+    <td>7.</td>
+    <td>728</td> 
+    <td>4.92</td>
+ </tr>
+<tr>
+    <td>8.</td>
+    <td>816</td> 
+    <td>2.8</td>
+ </tr>
+<tr>
+    <td>9.</td>
+    <td>856</td> 
+    <td>4.61</td>
+ </tr>
+<tr>
+    <td>10.</td>
+    <td>1096</td> 
+    <td>4.41</td>
+ </tr>
+
+</table>
+
+
+
+<li></li>
+<img src="GRAPH.png" />
+</br>
+
+
+
+
+</ul>
+
+
+
+
+</html>
