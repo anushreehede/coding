@@ -1,7 +1,6 @@
-#include<iostream>
-#include<stdlib.h>
-#include<string.h>
-#include<conio.h>
+#include <iostream>
+#include <stdlib.h>
+#include <string.h>
 
 //task 1
 char prefix[1000]; //stores the prefix expression used to make the tree
@@ -213,7 +212,7 @@ void insert(node** ref, char x) // method to insert elements in the binary tree
         }
         return; 
     }
-    else  // if passed pointer is not NULL
+    else  // if passed pzointer is not NULL
     {
         if(current->atom == '~')  // if the previously created node contained a ~ 
         {
@@ -233,6 +232,10 @@ void insert(node** ref, char x) // method to insert elements in the binary tree
         }
         else if(isalpha(current->atom))  // if previously created node contains a propositional atom
         {
+            if(top->elt->atom == '~')
+            {
+                Pop();
+            }
             if(top->elt->left == NULL) // if left side of the newest added operator is empty, add node to left side
             {
                 insert(&top->elt->left, x);
@@ -362,6 +365,7 @@ void Traverse(node* root) //traverses the binary tree in a post order fashion an
         }
         
     }
+    return;
     
 }
 int Evaluate(node* root)   //invokes Traverse()
@@ -379,17 +383,344 @@ void FreeTree(node* root) // freeing the dynamically allocated memory by travers
     delete root;
 }
 
+void IMPL_FREE(node* root)
+{
+    if(isalpha(root->atom))
+    {
+        return;
+    }
+    switch(root->atom)
+    {
+        case '~': IMPL_FREE(root->right); break;
+        case '*': case '+': IMPL_FREE(root->left);
+                  IMPL_FREE(root->right);
+                  break;
+        case '>': {
+                    node* newptr = Create_Tree_Node('~');
+                    newptr->right = root->left;
+                    root->left = newptr;
+                    root->atom = '+';
+                    IMPL_FREE(root);
+                 } break;
+        default: break;
+    }
+    return;
+}
+
+void NNF(node* root, int f1, int f2)
+{
+    int flag1 = 0, flag2 = 0;
+    //std::cout << "\n%%%%%%%%" << root->atom << "%%%%%%%% \n" <<  std::endl;
+    if(isalpha((root)->atom))
+    {
+        //std::cout << "\n$$$$$$$$$" << root->atom << "$$$$$$$$$ \n" <<  std::endl;
+        return;
+    }
+
+    if((root)->left!=NULL && (root)->left->atom == '~')
+    {
+       flag1 = 1; 
+       Stack* ptr = Create_Stack_node(root);
+       Push(ptr);
+    }
+    if((root)->right->atom == '~')
+    {
+        flag2 = 1;
+        if(flag1 == 0 && (root)->atom!='~')
+        {
+          Stack* ptr = Create_Stack_node(root);
+          Push(ptr);
+        }
+    }
+    
+    switch((root)->atom)
+    {
+        case '~':{
+                   if(isalpha((root)->right->atom))
+                   {
+                       //std::cout << "\n$$$$$$$$$" << root->atom << "$$$$$$$$$ \n" <<  std::endl;
+                       NNF((root)->right, flag1, flag2);
+                       return;
+                   }
+                   switch((root)->right->atom)
+                   {
+                       case '~': { if(top!=NULL)
+                                    {
+                                        if(f1 == 1)
+                                            top->elt->left = (root)->right->right;
+                                        if(f2 == 1)
+                                            top->elt->right = (root)->right->right;
+                                        free(root->right);
+                                        free(root);
+                                    }
+                                    else
+                                    {
+                                        node* temp1 = root;
+                                        node* temp2 = root->right;
+                                        root=root->right->right;
+                                        free(temp1);
+                                        free(temp2);
+                                    }
+                                   
+                                   flag1 = f1; flag2 = f2;
+                                   NNF(top->elt->left, flag1, flag2);
+                                 } break;
+                       case '+': { if(f1 == 0 || f2 == 0)
+                                   {
+                                     root->right->atom = '*'; 
+                                     node* newptr1 = Create_Tree_Node('~');
+                                     node* newptr2 = Create_Tree_Node('~');
+                                     newptr1->right = (root)->right->left;
+                                     newptr2->right = (root)->right->right;
+                                     (root)->right->left = newptr1;
+                                     (root)->right->right = newptr2;
+                                     root = root->right;
+                                     flag1 = f1; flag2 = f2;
+                                     NNF(root, flag1, flag2);
+                                   }
+                                   if(f1 == 1)
+                                   {
+                                       top->elt->left = (root)->right;
+                                       (root)->right->atom = '*';
+                                       node* newptr1 = Create_Tree_Node('~');
+                                       node* newptr2 = Create_Tree_Node('~');
+                                       newptr1->right = (root)->right->left;
+                                       newptr2->right = (root)->right->right;
+                                       (root)->right->left = newptr1;
+                                       (root)->right->right = newptr2;
+                                       
+                                       free((root));
+                                       flag1 = f1; flag2 = f2;
+                                       NNF(top->elt->left, flag1, flag2);
+                                   }
+                                   if(f2 == 1)
+                                   {
+                                       top->elt->right = (root)->right;
+                                       (root)->right->atom = '*';
+                                       node* newptr1 = Create_Tree_Node('~');
+                                       node* newptr2 = Create_Tree_Node('~');
+                                       newptr1->right = (root)->right->left;
+                                       newptr2->right = (root)->right->right;
+                                       (root)->right->left = newptr1;
+                                       (root)->right->right = newptr2;
+                                       
+                                       free(root);
+                                       flag1 = f1; flag2 = f2;
+                                       NNF(top->elt->right, flag1, flag2);
+                                   }
+                                } break;
+                        case '*': {if(f1 == 0 || f2 == 0)
+                                   {
+                                     root->right->atom = '+'; 
+                                     node* newptr1 = Create_Tree_Node('~');
+                                     node* newptr2 = Create_Tree_Node('~');
+                                     newptr1->right = (root)->right->left;
+                                     newptr2->right = (root)->right->right;
+                                     (root)->right->left = newptr1;
+                                     (root)->right->right = newptr2;
+                                     root = root->right;
+                                     flag1 = f1; flag2 = f2;
+                                     NNF(root, flag1, flag2);
+                                   } 
+                                   if(f1 == 1)
+                                   {
+                                       top->elt->left = (root)->right;
+                                       (root)->right->atom = '+';
+                                       node* newptr1 = Create_Tree_Node('~');
+                                       node* newptr2 = Create_Tree_Node('~');
+                                       newptr1->right = (root)->right->left;
+                                       newptr2->right = (root)->right->right;
+                                       (root)->right->left = newptr1;
+                                       (root)->right->right = newptr2;
+                                       
+                                       free(root);
+                                       flag1 = f1; flag2 = f2;
+                                       NNF(top->elt->left, flag1, flag2);
+                                   }
+                                   if(f2 == 1)
+                                   {
+                                       top->elt->right = (root)->right;
+                                       (root)->right->atom = '+';
+                                       node* newptr1 = Create_Tree_Node('~');
+                                       node* newptr2 = Create_Tree_Node('~');
+                                       newptr1->right = (root)->right->left;
+                                       newptr2->right = (root)->right->right;
+                                       (root)->right->left = newptr1;
+                                       (root)->right->right = newptr2;
+                                       
+                                       free(root);
+                                       flag1 = f1; flag2 = f2;
+                                       NNF(top->elt->right, flag1, flag2);
+                                   }
+                                } break;
+                       default: break;         
+                   }
+                   Pop();
+                 } break;
+       case '*': case '+': {    
+                                //start
+                                if(flag1==1 && flag2==1)
+                                {
+                                    NNF((root)->left, flag1, 0);
+                                    NNF((root)->right, 0, flag2);
+                                }
+                                //end
+                                NNF((root)->left, flag1, flag2);
+                                NNF((root)->right, flag1, flag2);
+                           } break;
+       default: break;
+      
+    }
+    return;
+}
+
+node* copyTree(node* root) 
+{
+   if (root == NULL ) 
+    return root;
+   //create new node and make it a copy of node pointed by root
+   node* temp = new node;
+   temp->atom = root->atom;    //copying data
+   temp->boolean = root->boolean;
+   temp->left = copyTree(root -> left);    //cloning left child
+   temp->right = copyTree(root -> right);  //cloning right child
+   return temp;
+} 
+
+void DISTR(node* root)
+{
+  if(isalpha(root->atom) || root->atom == '~')
+    return;
+  if(root->left->atom == '*')
+  {
+    node* newptr = Create_Tree_Node('+');
+    newptr->right = root->right;
+    newptr->left = root->left->right;
+    node* copied = copyTree(root->right);
+    root->left->right = copied;
+    root->right = newptr;
+    root->left->atom = '+';
+    root->atom = '*';
+  }
+  if(root->right->atom == '*')
+  {
+    node* newptr = Create_Tree_Node('+');
+    newptr->left = root->left;
+    newptr->right = root->right->left;
+    node* copied = copyTree(root->left);
+    root->right->left = copied;
+    root->left = newptr;
+    root->right->atom ='+';
+    root->atom = '*';
+  }
+  DISTR(root->left);
+  DISTR(root->right);
+}
+
+void CNF(node* root)
+{
+  if(isalpha(root->atom) || root->atom == '~')
+  {
+    return;
+  }
+  else if(root->atom == '*')
+  {
+    CNF(root->left);
+    CNF(root->right);
+  }
+  else
+  {
+   CNF(root->left);
+   CNF(root->right);
+   DISTR(root);
+  }
+}
+
+char CNFstr[1000];
+int pos = -1;
+void getString(node* root)
+{
+  if(root == NULL)
+    return;
+  getString(root->left);
+  CNFstr[++pos] = root->atom;
+  getString(root->right);
+}
+
+//checking validity
+void validity()
+{
+  char conjunct[1000];
+  int j = 0, flag=-1,valid = 1; int i, k, m, x=0, y=0;
+  for(i = 0; i<pos+1; ++i)
+  {
+    //std::cout<<"When we start an iteration "<<CNFstr[i]<<" "<<flag<<"\n";
+    if(CNFstr[i] == '~')
+    {
+      conjunct[j] = CNFstr[i+1]; 
+      ++j;
+      //std::cout<<"When we hit ~ "<<flag<<"\n";
+    }
+    if(CNFstr[i] == '*' || CNFstr[i] == '\0')
+    {
+      //std::cout<<"When we hit * "<<flag<<"\n";
+      conjunct[j] = CNFstr[i];
+      ++j;
+      for(k = x; k<i; ++k) // iterating through CNFstr 
+      {
+        if(isalpha(CNFstr[k]) && CNFstr[k-1]!='~')
+        {
+          flag = 0;
+          //std::cout<<"When we hit a plain literal "<<CNFstr[k]<<" "<<flag<<"\n";
+          for(m=y; m<j; ++m) // iterating over conjunct 
+          {
+            if(CNFstr[k] == conjunct[m])
+            {
+              //std::cout<<conjunct[m]<<"***\n";
+              flag=1; break;
+            }
+          }
+        }
+        if(flag==1)
+        {
+          //std::cout<<flag<<"&&&\n";
+          break;
+        }
+      }
+      //std::cout<<"When we hit end of * if "<<flag<<"\n";
+      x = i+1; y = j;
+    }
+    if(flag == 0)
+    {
+      //std::cout<<"When we break out if its invalid "<<flag<<"\n";
+      valid = 0;
+      break;
+    }
+    else if(flag == 1)
+      flag = -1;
+    else continue;
+  }
+  if(valid == 0)
+  {
+    std::cout<<"\nThe given formula is not valid!\n";
+  }
+  else
+  {
+    std::cout<<"\nThe given formula is valid!\n";
+  }
+}
+
 //main function
 int main()
 {
-    clrscr();
+    system("clear");
     char expr[1500]; // infix expression
     
     std::cout<<"Enter the fully  parenthesized infix expression:\n";
     std::cin>>expr;
     node* root = NULL; // pointer to root node of binary tree
-	node** ref;  // pointer to the variable root
-	ref = &root;
+	  node** ref;  // pointer to the variable root
+	  ref = &root;
 	
     //converting infix to prefix
     makePrefix(expr); 
@@ -405,8 +736,8 @@ int main()
     InOrder(root);
     
     //calculating height of the binary tree
-	int h=Height(root);
-	std::cout <<"\n\nHeight of the tree = "<<h<<"\n";
+	  int h1=Height(root);
+	  std::cout <<"\n\nHeight of the tree = "<<h1<<"\n";
     
     //evaluating the truth value of the expression
     int ans = Evaluate(root);
@@ -417,9 +748,43 @@ int main()
      ch = 'F';
     std::cout<<"\nTruth value answer: "<<ch<<"\n";
     
+    
+    IMPL_FREE(root);
+    std::cout<<"\nInfix obtained again after IMPL_FREE = ";
+    InOrder(root);
+    
+    NNF(root,0,0);
+    if(root->atom == '~')
+    {
+      node* temp = root;
+      root = root->right;
+      free(temp);
+    }
+    std::cout<<"\nInfix obtained again after NNF = ";
+    InOrder(root);
+
+    CNF(root);
+    std::cout<<"\nInfix obtained again after CNF = ";
+    InOrder(root);
+
+    int h2=Height(root);
+    std::cout <<"\n\nHeight of the tree in CNF = "<<h2<<"\n";
+
+    while(top!=NULL)
+    {
+      Pop();
+    }
+    
+    getString(root);
+    CNFstr[++pos] = '\0';
+    std::cout<<"\nThe CNF string is "<<CNFstr<<"\n";
+
+    validity();
+
     //freeing dynamically allocated memory
     FreeTree(root);
 
     std::cout<<"\nDone with all tasks\n";
+    
     return 0;
 }
