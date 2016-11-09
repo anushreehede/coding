@@ -1,8 +1,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-#include<conio.h>
 #include<ctype.h>
+#include<time.h>
 //task 1
 char prefix[1000]; //stores the prefix expression used to make the tree
 
@@ -257,7 +257,7 @@ void InOrder(struct node* root) // method to traverse the parse tree in an in or
 		return;
 	}
     InOrder(root->left);
-    printf("%d",root->atom);
+    printf("%c",root->atom);
     InOrder(root->right);
 }
 
@@ -382,7 +382,8 @@ void FreeTree(struct node* root) // freeing the dynamically allocated memory by 
 //main function
 int main()
 {
-    clrscr();
+    system("clear");
+    clock_t begin =  clock();
     char expr[1500]; // infix expression
     
     printf("Enter the fully  parenthesized infix expression:\n");
@@ -420,5 +421,9 @@ int main()
     FreeTree(root);
 
     printf("\nDone with all tasks\n");
+    
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    printf("\nExecution time : %lf seconds\n",time_spent);
     return 0;
 }
