@@ -444,7 +444,9 @@ void NNF(node* root, int f1, int f2)
                    }
                    switch((root)->right->atom)
                    {
-                       case '~': { if(top!=NULL)
+                       case '~': {  //std::cout<<"\nHello\n";
+                                    //if(top == NULL) std::cout<<"NULL\n";
+                                    if(top!=NULL)
                                     {
                                         if(f1 == 1)
                                             top->elt->left = (root)->right->right;
@@ -452,20 +454,11 @@ void NNF(node* root, int f1, int f2)
                                             top->elt->right = (root)->right->right;
                                         free(root->right);
                                         free(root);
+                                        flag1 = f1; flag2 = f2;
+                                        NNF(top->elt->left, flag1, flag2);
                                     }
-                                    else
-                                    {
-                                        node* temp1 = root;
-                                        node* temp2 = root->right;
-                                        root=root->right->right;
-                                        free(temp1);
-                                        free(temp2);
-                                    }
-                                   
-                                   flag1 = f1; flag2 = f2;
-                                   NNF(top->elt->left, flag1, flag2);
                                  } break;
-                       case '+': { if(f1 == 0 || f2 == 0)
+                       case '+': { if(f1 == 0 && f2 == 0)
                                    {
                                      root->right->atom = '*'; 
                                      node* newptr1 = Create_Tree_Node('~');
@@ -509,7 +502,7 @@ void NNF(node* root, int f1, int f2)
                                        NNF(top->elt->right, flag1, flag2);
                                    }
                                 } break;
-                        case '*': {if(f1 == 0 || f2 == 0)
+                        case '*': {if(f1 == 0 && f2 == 0)
                                    {
                                      root->right->atom = '+'; 
                                      node* newptr1 = Create_Tree_Node('~');
@@ -565,12 +558,16 @@ void NNF(node* root, int f1, int f2)
                                     NNF((root)->right, 0, flag2);
                                 }
                                 //end
-                                NNF((root)->left, flag1, flag2);
-                                NNF((root)->right, flag1, flag2);
+                                else
+                                {
+                                    NNF((root)->left, flag1, flag2);
+                                    NNF((root)->right, flag1, flag2);
+                                }
                            } break;
        default: break;
       
     }
+    //std::cout<<root->atom<<"^^^\n";
     return;
 }
 
@@ -668,9 +665,9 @@ void validity()
       ++j;
       for(k = x; k<i; ++k) // iterating through CNFstr 
       {
+        flag = 0;
         if(isalpha(CNFstr[k]) && CNFstr[k-1]!='~')
         {
-          flag = 0;
           //std::cout<<"When we hit a plain literal "<<CNFstr[k]<<" "<<flag<<"\n";
           for(m=y; m<j; ++m) // iterating over conjunct 
           {
@@ -748,18 +745,41 @@ int main()
      ch = 'F';
     std::cout<<"\nTruth value answer: "<<ch<<"\n";
     
-    
+    while(top!=NULL)
+    {
+      //std::cout<<"Popping\n";
+      Pop();
+    }
+    top = NULL;
+
+    std::cout<<"\n--------- Assignment 2 --------- \n";
+
+    node* rootOriginal = copyTree(root);
+
     IMPL_FREE(root);
     std::cout<<"\nInfix obtained again after IMPL_FREE = ";
     InOrder(root);
-    
+
+    if(root->atom == '~' && root->right->atom == '~')
+    {
+        //std::cout<<"Free!\n";
+        node* temp1 = root;
+        node* temp2 = root->right;
+        root=root->right->right;
+        free(temp2);
+        free(temp1);
+        //std::cout<<root->atom<<"\n";                                       
+    }
     NNF(root,0,0);
-    if(root->atom == '~')
+    //std::cout<<root->atom<<"***\n";
+    
+    if(root->atom == '~' && !isalpha(root->right->atom) && root->right->atom!='~')
     {
       node* temp = root;
       root = root->right;
       free(temp);
     }
+    //std::cout<<root->atom<<"***\n";
     std::cout<<"\nInfix obtained again after NNF = ";
     InOrder(root);
 
@@ -767,24 +787,28 @@ int main()
     std::cout<<"\nInfix obtained again after CNF = ";
     InOrder(root);
 
-    int h2=Height(root);
-    std::cout <<"\n\nHeight of the tree in CNF = "<<h2<<"\n";
+
+    h1 = Height(rootOriginal);
+    int h2 = Height(root);
+    std::cout <<"\n\nHeight of the original tree = "<<h1<<"\nHeight of the tree in CNF = "<<h2<<"\n";
 
     while(top!=NULL)
     {
+      //std::cout<<"Popping\n";
       Pop();
     }
-    
+    top = NULL;
+
     getString(root);
     CNFstr[++pos] = '\0';
-    std::cout<<"\nThe CNF string is "<<CNFstr<<"\n";
+    //std::cout<<"\nThe CNF string is "<<CNFstr<<"\n";
 
     validity();
 
     //freeing dynamically allocated memory
     FreeTree(root);
 
-    std::cout<<"\nDone with all tasks\n";
+    std::cout<<"\nDone with all tasks\n\n";
     
     return 0;
 }
