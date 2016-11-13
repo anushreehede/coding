@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ctype.h>
 
 //task 1
 char prefix[1000]; //stores the prefix expression used to make the tree
@@ -10,13 +11,13 @@ char prefix[1000]; //stores the prefix expression used to make the tree
 struct preStack
 {
     char elt; // holds operator
-    preStack* next;
+    struct preStack* next;
 };                 //Stack structure  
 struct preStack* preTop = NULL; // top pointer to stack 
 
 struct preStack* Create_preStack_node(char x) // creating node for stack 
 {
-    struct preStack* ptr = (preStack*)malloc(sizeof(preStack));
+    struct preStack* ptr = (struct preStack*)malloc(sizeof(struct preStack));
     ptr->elt = x;
     ptr->next = NULL;
     return ptr;
@@ -39,7 +40,7 @@ char prePop()              //popping from stack
     else
     {
 		char ch = preTop->elt;
-        preStack* save = preTop;
+        struct preStack* save = preTop;
         preTop = preTop->next;
         free(save);
 		return ch;
@@ -81,7 +82,7 @@ void makePrefix(char expr[])  // conversion of infix expression to prefix expres
 		}
 		else if(expr[i]=='(' || expr[i]=='+' || expr[i]=='*'||expr[i]=='~'||expr[i]=='>' ) // if any of these
 		{
-            preStack* ptr = Create_preStack_node(expr[i]); // create a node in the stack
+            struct preStack* ptr = Create_preStack_node(expr[i]); // create a node in the stack
 			prePush(ptr); // push the node into the stack
 		}
 		else if(expr[i]==')')  // if expression contains a )
@@ -117,7 +118,7 @@ struct node* current = NULL; // holds the address of the last node which has bee
 
 struct node* Create_Tree_Node(char x) // creates nodes in the binary tree
 {
-    struct node* ptr = (node*)malloc(sizeof(node)); //allocating memory for the node
+    struct node* ptr = (struct node*)malloc(sizeof(struct node)); //allocating memory for the node
     ptr->atom=x; 
     ptr->left=ptr->right=NULL;
     return ptr;
@@ -141,7 +142,7 @@ struct Stack* top = NULL; // points to the top of Stack
 
 struct Stack* Create_Stack_node(struct node* x) // creating nodes in the stack
 {
-    struct Stack* ptr = (Stack*)malloc(sizeof(Stack));
+    struct Stack* ptr = (struct Stack*)malloc(sizeof(struct Stack));
     ptr->elt = x;
     ptr->next = NULL;
     return ptr;
@@ -191,7 +192,7 @@ void insert(struct node** ref, char x) // method to insert elements in the binar
             {
                 //enter the values of T/F for each atom
                 printf("Truth value of %c ",ptr->atom);
-                scanf("%c",&val);
+                scanf("%c ",&val);
                 if(val == 'T' || val == 't')
                  ptr->boolean = 1;
                 if (val == 'F' || val == 'f')
@@ -292,13 +293,13 @@ int Height(struct node* ptr) // method to calculate the height of a parse tree
 struct boolStack
 {
     int elt; // holds the boolean values 0 or 1
-    boolStack* next;
+    struct boolStack* next;
 };
 struct boolStack* boolTop = NULL; // points to the top of the above stack
 
 struct boolStack* Create_boolStack_node(int x) // creates node 
 {
-    struct boolStack* ptr = (boolStack*)malloc(sizeof(boolStack));
+    struct boolStack* ptr = (struct boolStack*)malloc(sizeof(struct boolStack));
     ptr->elt = x;
     ptr->next = NULL;
     return ptr;
@@ -321,7 +322,7 @@ int Pop_calc()  //popping node from the stack
     else
     {
         int c = boolTop->elt;
-        boolStack* save = boolTop;
+        struct boolStack* save = boolTop;
         boolTop = boolTop->next;
         free(save);
         return c;
@@ -339,7 +340,7 @@ void Traverse(struct node* root) //traverses the binary tree in a post order fas
         Traverse(root->right);
         if(isalpha(root->atom)) //if node in the tree has a propositional atom
         {
-            boolStack* ptr = Create_boolStack_node(root->boolean); // create a node in boolStack
+            struct boolStack* ptr = Create_boolStack_node(root->boolean); // create a node in boolStack
             Push_calc(ptr); //push the boolean value into the stack
         }
         else
@@ -381,10 +382,13 @@ void FreeTree(struct node* root) // freeing the dynamically allocated memory by 
      return;
     FreeTree(root->left);
     FreeTree(root->right);
-    delete root;
+    free(root);
 }
 
-void IMPL_FREE(struct node* root)
+// <---------- Assignment 2 code ------------> 
+
+// task 1
+void IMPL_FREE(struct node* root)  // removing > implication symbol 
 {
     if(isalpha(root->atom))
     {
@@ -394,13 +398,13 @@ void IMPL_FREE(struct node* root)
     {
         case '~': IMPL_FREE(root->right); break;
         case '*': case '+': IMPL_FREE(root->left);
-                  IMPL_FREE(root->right);
+                            IMPL_FREE(root->right);
                   break;
         case '>': {
-                    node* newptr = Create_Tree_Node('~');
-                    newptr->right = root->left;
-                    root->left = newptr;
-                    root->atom = '+';
+                    struct node* newptr = Create_Tree_Node('~'); 
+                    newptr->right = root->left; // link the right side of the  new ~ node to the left child of the root 
+                    root->left = newptr; // make the new ~ node the left child of the root 
+                    root->atom = '+';  // change the root symbol to + 
                     IMPL_FREE(root);
                  } break;
         default: break;
@@ -410,20 +414,23 @@ void IMPL_FREE(struct node* root)
 
 void NNF(struct node* root, int f1, int f2)
 {
+    // f1 and f2 are flags for the previous recursion call
+    // flag1 and flag2 are flags for the current recursion call
     int flag1 = 0, flag2 = 0;
-    //std::cout << "\n%%%%%%%%" << root->atom << "%%%%%%%% \n" <<  std::endl;
-    if(isalpha((root)->atom))
+    // returning if passed node is a propositional atom 
+    if(isalpha(root->atom))
     {
-        //std::cout << "\n$$$$$$$$$" << root->atom << "$$$$$$$$$ \n" <<  std::endl;
         return;
     }
-
-    if((root)->left!=NULL && (root)->left->atom == '~')
+    
+    // checks whether left child of root is not empty and contains ~, changes flag1, pushes root in Stack 
+    if(root->left!=NULL && root->left->atom == '~')
     {
        flag1 = 1; 
        struct Stack* ptr = Create_Stack_node(root);
        Push(ptr);
     }
+    // checks whether right child of root contains ~, changes flag2, pushes in Stack if already not pushed 
     if((root)->right->atom == '~')
     {
         flag2 = 1;
@@ -434,24 +441,26 @@ void NNF(struct node* root, int f1, int f2)
         }
     }
     
+    // what does root contain?
     switch((root)->atom)
     {
-        case '~':{
+        case '~':{ 
+                   // if right child of root is a propositional atom 
                    if(isalpha((root)->right->atom))
                    {
-                       //std::cout << "\n$$$$$$$$$" << root->atom << "$$$$$$$$$ \n" <<  std::endl;
                        NNF((root)->right, flag1, flag2);
                        return;
                    }
+                   // what does right child of root contain?
                    switch((root)->right->atom)
                    {
-                       case '~': {  //std::cout<<"\nHello\n";
-                                    //if(top == NULL) std::cout<<"NULL\n";
+                       case '~': {  
+                                    // if top is not NULL, top is followed by two ~ nodes 
                                     if(top!=NULL)
                                     {
-                                        if(f1 == 1)
+                                        if(f1 == 1) // left children of top->elt are double ~
                                             top->elt->left = (root)->right->right;
-                                        if(f2 == 1)
+                                        if(f2 == 1) // right children of top->elt are double ~
                                             top->elt->right = (root)->right->right;
                                         free(root->right);
                                         free(root);
@@ -459,7 +468,9 @@ void NNF(struct node* root, int f1, int f2)
                                         NNF(top->elt->left, flag1, flag2);
                                     }
                                  } break;
-                       case '+': { if(f1 == 0 && f2 == 0)
+
+                                 // cases for DeMorgan's laws 
+                       case '+': { if(f1 == 0 && f2 == 0) // when main root is a ~
                                    {
                                      root->right->atom = '*'; 
                                      struct node* newptr1 = Create_Tree_Node('~');
@@ -472,7 +483,7 @@ void NNF(struct node* root, int f1, int f2)
                                      flag1 = f1; flag2 = f2;
                                      NNF(root, flag1, flag2);
                                    }
-                                   if(f1 == 1)
+                                   if(f1 == 1) // when the left child has a parent node ~
                                    {
                                        top->elt->left = (root)->right;
                                        (root)->right->atom = '*';
@@ -487,7 +498,7 @@ void NNF(struct node* root, int f1, int f2)
                                        flag1 = f1; flag2 = f2;
                                        NNF(top->elt->left, flag1, flag2);
                                    }
-                                   if(f2 == 1)
+                                   if(f2 == 1) // when the right child has a parent node ~
                                    {
                                        top->elt->right = (root)->right;
                                        (root)->right->atom = '*';
@@ -503,7 +514,7 @@ void NNF(struct node* root, int f1, int f2)
                                        NNF(top->elt->right, flag1, flag2);
                                    }
                                 } break;
-                        case '*': {if(f1 == 0 && f2 == 0)
+                        case '*': {if(f1 == 0 && f2 == 0) // when main root is a ~
                                    {
                                      root->right->atom = '+'; 
                                      struct node* newptr1 = Create_Tree_Node('~');
@@ -516,7 +527,7 @@ void NNF(struct node* root, int f1, int f2)
                                      flag1 = f1; flag2 = f2;
                                      NNF(root, flag1, flag2);
                                    } 
-                                   if(f1 == 1)
+                                   if(f1 == 1)  // when the left child has a parent node ~
                                    {
                                        top->elt->left = (root)->right;
                                        (root)->right->atom = '+';
@@ -531,7 +542,7 @@ void NNF(struct node* root, int f1, int f2)
                                        flag1 = f1; flag2 = f2;
                                        NNF(top->elt->left, flag1, flag2);
                                    }
-                                   if(f2 == 1)
+                                   if(f2 == 1)  // when the right child has a parent node ~
                                    {
                                        top->elt->right = (root)->right;
                                        (root)->right->atom = '+';
@@ -551,14 +562,13 @@ void NNF(struct node* root, int f1, int f2)
                    }
                    Pop();
                  } break;
-       case '*': case '+': {    
-                                //start
-                                if(flag1==1 && flag2==1)
+       case '*': case '+': {    //
+                                if(flag1==1 && flag2==1) 
                                 {
                                     NNF((root)->left, flag1, 0);
                                     NNF((root)->right, 0, flag2);
                                 }
-                                //end
+                                //
                                 else
                                 {
                                     NNF((root)->left, flag1, flag2);
@@ -568,7 +578,6 @@ void NNF(struct node* root, int f1, int f2)
        default: break;
       
     }
-    //std::cout<<root->atom<<"^^^\n";
     return;
 }
 
@@ -577,7 +586,7 @@ struct node* copyTree(struct node* root)
    if (root == NULL ) 
     return root;
    //create new node and make it a copy of node pointed by root
-   struct node* temp = (node*)malloc(sizeof(node));
+   struct node* temp = (struct node*)malloc(sizeof(struct node));
    temp->atom = root->atom;    //copying data
    temp->boolean = root->boolean;
    temp->left = copyTree(root -> left);    //cloning left child
@@ -587,14 +596,16 @@ struct node* copyTree(struct node* root)
 
 void DISTR(struct node* root)
 {
+  // returns if root contains a literal 
   if(isalpha(root->atom) || root->atom == '~')
     return;
+  // distributive law, finding out which branch to add + node and change + and * in existing nodes  
   if(root->left->atom == '*')
   {
     struct node* newptr = Create_Tree_Node('+');
     newptr->right = root->right;
     newptr->left = root->left->right;
-    node* copied = copyTree(root->right);
+    struct node* copied = copyTree(root->right); // creating a copy of branch of root->right 
     root->left->right = copied;
     root->right = newptr;
     root->left->atom = '+';
@@ -602,30 +613,34 @@ void DISTR(struct node* root)
   }
   if(root->right->atom == '*')
   {
-    node* newptr = Create_Tree_Node('+');
+    struct node* newptr = Create_Tree_Node('+');
     newptr->left = root->left;
     newptr->right = root->right->left;
-    node* copied = copyTree(root->left);
+    struct node* copied = copyTree(root->left); // creating a copy of branch of root->left 
     root->right->left = copied;
     root->left = newptr;
     root->right->atom ='+';
     root->atom = '*';
   }
+  // recursively calling DISTR on left and right children 
   DISTR(root->left);
   DISTR(root->right);
 }
 
-void CNF(node* root)
+void CNF(struct node* root)
 {
+  // returns if root contains a literal  
   if(isalpha(root->atom) || root->atom == '~')
   {
     return;
   }
+  // recursively call CNF for left and right child, if root contains *
   else if(root->atom == '*')
   {
     CNF(root->left);
     CNF(root->right);
   }
+  // call CNF for left and right child and then call DISTR 
   else
   {
    CNF(root->left);
@@ -634,9 +649,11 @@ void CNF(node* root)
   }
 }
 
+//task 2
+// Gets the infix form of the CNF parse tree in a string 
 char CNFstr[1000];
-int pos = -1;
-void getString(node* root)
+int pos = -1; // for indexing elements of CNFstr
+void getString(struct node* root)
 {
   if(root == NULL)
     return;
@@ -648,20 +665,20 @@ void getString(node* root)
 //checking validity
 void validity()
 {
-  char conjunct[1000];
+  char conjunct[1000]; // this stores elements which have a ~ preceding it 
   int j = 0, flag=-1,valid = 1; int i, k, m, x=0, y=0;
   for(i = 0; i<pos+1; ++i)
   {
-    //std::cout<<"When we start an iteration "<<CNFstr[i]<<" "<<flag<<"\n";
+    // adding elements which have a ~ preceding it to conjunct
     if(CNFstr[i] == '~')
     {
       conjunct[j] = CNFstr[i+1]; 
       ++j;
-      //std::cout<<"When we hit ~ "<<flag<<"\n";
     }
+    // when you encounter a conjunction or end of the string 
     if(CNFstr[i] == '*' || CNFstr[i] == '\0')
     {
-      //std::cout<<"When we hit * "<<flag<<"\n";
+      // add the * to conjunct 
       conjunct[j] = CNFstr[i];
       ++j;
       for(k = x; k<i; ++k) // iterating through CNFstr 
@@ -669,32 +686,27 @@ void validity()
         flag = 0;
         if(isalpha(CNFstr[k]) && CNFstr[k-1]!='~')
         {
-          //std::cout<<"When we hit a plain literal "<<CNFstr[k]<<" "<<flag<<"\n";
           for(m=y; m<j; ++m) // iterating over conjunct 
           {
             if(CNFstr[k] == conjunct[m])
             {
-              //std::cout<<conjunct[m]<<"***\n";
-              flag=1; break;
+              flag=1; break; // found a match, conjunct is valid 
             }
           }
         }
-        if(flag==1)
+        if(flag==1) // valid 
         {
-          //std::cout<<flag<<"&&&\n";
-          break;
+          break; 
         }
       }
-      //std::cout<<"When we hit end of * if "<<flag<<"\n";
-      x = i+1; y = j;
+      x = i+1; y = j; // increment the position of x and y 
     }
-    if(flag == 0)
+    if(flag == 0) // formula is not valid 
     {
-      //std::cout<<"When we break out if its invalid "<<flag<<"\n";
       valid = 0;
       break;
     }
-    else if(flag == 1)
+    else if(flag == 1) // reset flag 
       flag = -1;
     else continue;
   }
@@ -758,54 +770,63 @@ int main()
     
     printf("\n--------- Assignment 2 --------- \n");
 
-    node* rootOriginal = copyTree(root);
+    // task 1
+    // copying binary parse tree created in Assignment 1 to rootOriginal 
+    struct node* rootOriginal = copyTree(root);
 
+    // we are creating the CNF parse tree using root itself
+    // function to remove all > implications and printing formula 
     IMPL_FREE(root);
     printf("\nInfix obtained again after IMPL_FREE = ");
     InOrder(root);
 
+    // deciding whether first two nodes in tree are ~ negation, and freeing them
     if(root->atom == '~' && root->right->atom == '~')
     {
-        //printf("Free!\n";
-        node* temp1 = root;
-        node* temp2 = root->right;
+        struct node* temp1 = root;
+        struct node* temp2 = root->right;
         root=root->right->right;
         free(temp2);
-        free(temp1);
-        //std::cout<<root->atom<<"\n";                                       
+        free(temp1);                                    
     }
-    NNF(root,0,0);
-    //std::cout<<root->atom<<"***\n";
     
+    // function to remove negations of expressions 
+    NNF(root,0,0);
+    // if first node is a negation but next node is + or *, freeing the ~ 
     if(root->atom == '~' && !isalpha(root->right->atom) && root->right->atom!='~')
     {
-      node* temp = root;
+      struct node* temp = root;
       root = root->right;
       free(temp);
     }
-    //std::cout<<root->atom<<"***\n";
+    // printing obtained formula 
     printf("\nInfix obtained again after NNF = ");
     InOrder(root);
-
+    
+    // function to convert formula into CNF and printing formula obtained 
     CNF(root);
     printf("\nInfix obtained again after CNF = ");
     InOrder(root);
 
+    // task 3
+    // calculating height of original parse tree and the CNF parse tree and comparing them 
     h1 = Height(rootOriginal);
     int h2 = Height(root);
     printf("\n\nHeight of the original tree = %d\nHeight of the tree in CNF = %d\n",h1,h2);
 
+    // freeing the Stack of all its elements 
     while(top!=NULL)
     {
-      //std::cout<<"Popping\n";
       Pop();
     }
     top = NULL;
 
+    // task 2
+    // converting the CNF parse tree into an infix string expression 
     getString(root);
     CNFstr[++pos] = '\0';
-    //std::cout<<"\nThe CNF string is "<<CNFstr<<"\n";
-
+    
+    // function to check whether given CNF expression is valid 
     validity();
 
     //freeing dynamically allocated memory
